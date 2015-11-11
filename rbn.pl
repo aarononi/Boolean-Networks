@@ -30,7 +30,7 @@ chomp ($set);
 $run = "Start";
 while ($run eq "Start" || $run =~ /^\s*y\s*$/i) {
 
-	print "Name of boolean network?\n";
+	print "Name of Boolean network?\n";
 	$name = <>;
 	chomp($name);
 	
