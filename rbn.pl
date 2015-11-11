@@ -1,12 +1,18 @@
 #!/usr/bin/perl
 
-print "How many nodes? (n)\n";
-$n = <>;
-print "How many nodes for each function? (k)\n";
-$k = <>;
-print "How many states?\n";
-$s = <>;
-chomp ($n,$s,$k);
+while ($n !~ /^\s*\d+\s*\n$/) {
+	print "Number of genes (g)\n";
+	$n = <>;
+}
+while ($k !~ /^\s*\d+\s*\n$/) {
+	print "Number of variables (k) to be the regulatory function for gene g\n";
+	$k = <>;
+}
+while ($s !~ /^\s*\d+\s*\n$/) {
+	print "Number of states\n";
+	$s = <>;
+}
+chomp ($n,$k,$s);
 
 # must be all integers. n, k > 0 and k <= n
 
@@ -42,12 +48,12 @@ for my $i (0..$n-1) {
 		}
 	}
 	$functions[$i] = $string;
-	$nstring = $string;
-	$nstring =~ s/ (\d+) / n$1 /g;
-	$nstring =~ s/! /!/g;
-	$nstring =~ s/^\s+//;
-	$nstring =~ s/\s+$//;
-	print "n'$i = $nstring\n";
+	$gstring = $string;
+	$gstring =~ s/ (\d+) / g$1 /g;
+	$gstring =~ s/! /!/g;
+	$gstring =~ s/^\s+//;
+	$gstring =~ s/\s+$//;
+	print "g'$i = $gstring\n";
 }
 
 # initialise initial state
