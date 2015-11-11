@@ -27,9 +27,10 @@ if ($write =~ /^\s*y\s*$/i) {
 }
 chomp ($fname);
 
-my $output = "$n-$k Boolean network\n";
+my $output = "$n-$k Boolean network\n\n";
 
 # generate functions
+$output .= "Regulatory Functions\n";
 @functions;
 for my $i (0..$n-1) {
 	my $string = "";
@@ -91,7 +92,7 @@ for my $current (1..$s) {
 }
 
 # create table of states
-$output .= "State";
+$output .= "\nState";
 for my $i (0..$n-1) {
 	$output .= "\tg$i";
 }
@@ -106,7 +107,9 @@ for my $state (0..$s) {
 
 # write to file or print to STDOUT
 if ($fname ne "") {
-
+	open(my $f, '>', $fname) or die "Could not open file '$fname' $!";
+	print $f $output;
+	close $f;
 } else {
 	print $output;
 }
