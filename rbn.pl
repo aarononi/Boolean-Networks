@@ -64,7 +64,9 @@ for my $i (0..$n-1) {
 	$functions[$i] = $string;
 	$gstring = $string;
 	$gstring =~ s/ (\d+) / g$1 /g;
-	$gstring =~ s/! /!/g;
+	$gstring =~ s/! /~/g;
+	$gstring =~ s/&&/\^/g;
+	$gstring =~ s/\|\|/v/g;
 	$gstring =~ s/^\s+//;
 	$gstring =~ s/\s+$//;
 	$output .= "g'$i = $gstring\n";
@@ -107,7 +109,7 @@ for my $state (0..$s) {
 
 # write to file or print to STDOUT
 if ($fname ne "") {
-	open(my $f, '>', $fname) or die "Could not open file '$fname' $!";
+	open(my $f, '>', $fname) or die "Could not open file '$fname'";
 	print $f $output;
 	close $f;
 } else {
