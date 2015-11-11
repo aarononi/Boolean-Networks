@@ -26,157 +26,195 @@ if ($initial =~ /^\s*y\s*$/i) {
 	}
 }
 chomp ($set);
-while ($write !~ /^\s*(y|n)\s*$/i) {
-	print "Write to file? [Y/N]\n";
-	$write = <>;
-}
-if ($write =~ /^\s*y\s*$/i) {
-	while ($fname !~ /^\s*[\w\.]+\s*$/i) {
-		print "File name:\n";
-		$fname = <>;
-	}
-}
-$fname =~ s/^\s+//;
-$fname =~ s/\s+$//;
-chomp ($fname);
 
-# print header
-my $output = "$n-$k Boolean network\n";
-my $space = 2**$n;
-$output .= "State space = $space\n\n";
+$run = "Start";
+while ($run eq "Start" || $run =~ /^\s*y\s*$/i) {
 
-# generate functions
-$output .= "Regulatory functions\n";
-@functions;
-for my $i (0..$n-1) {
-	my $string = "";
-	my @selected;
-	for my $z (0..$n-1) {
-		$selected[$z] = 0;
-	}
-	for my $j (0..$k-1) {
-		my $not = int(rand()+0.5);
-		if ($not) {
-			$string .= " !"
+	print "Name of boolean network?\n";
+	$name = <>;
+	chomp($name);
+	
+	# write to file or print to command line
+	if ($run eq "Start") {
+		while ($write !~ /^\s*(y|n)\s*$/i) {
+			print "Write to file? [Y/N]\n";
+			$write = <>;
 		}
-		my $loop = 1;
-		while ($loop) {
-			my $node = int(rand($n));
-			if (!$selected[$node]) {
-				$string .= " $node ";
-				$selected[$node] = 1;
-				$loop = 0;
+		if ($write =~ /^\s*y\s*$/i) {
+			while ($fname !~ /^\s*[\w\.]+\s*$/i) {
+				print "File name:\n";
+				$fname = <>;
 			}
 		}
-		if ($j != $k-1) {
-			my $operator = int(rand()+0.5);
-			if ($operator) {
-				$string .= "&&";
-			} else {
-				$string .= "||";
+	} elsif ($write =~ /^\s*y\s*$/i) {
+		my $same = "";
+		while ($same !~ /^\s*(y|n)\s*$/i) {
+			print "Write to same file? [Y/N]\n";
+			$same = <>;
+		}
+		if ($same =~ /^\s*n\s*$/i) {
+			$fname = "";
+			while ($fname !~ /^\s*[\w\.]+\s*$/i) {
+				print "File name:\n";
+				$fname= <>;
 			}
 		}
 	}
-	$functions[$i] = $string;
-	$gstring = $string;
-	$gstring =~ s/ (\d+) / g$1 /g;
-	$gstring =~ s/! /~/g;
-	$gstring =~ s/&&/\^/g;
-	$gstring =~ s/\|\|/v/g;
-	$gstring =~ s/^\s+//;
-	$gstring =~ s/\s+$//;
-	$output .= "g'$i = $gstring\n";
-}
+	$fname =~ s/^\s+//;
+	$fname =~ s/\s+$//;
+	chomp ($fname);
 
-# initialise initial state
-if ($set ne "") {
-	$set =~ s/[\s,]//g;
-	@start = split //, $set;
-	@states;
-	for my $i (0..$n-1) {
-		$states[0][$i] = $start[$i];
-	}
-} else {
-	@states;
-	for my $i (0..$n-1) {
-		$states[0][$i] = int(rand()+0.5);
-	}
-}
+	# print header
+	my $output = "$name ($n-$k Boolean network)\n";
+	$output =~ s/^\s*//;
+	my $space = 2**$n;
+	$output .= "State space = $space\n\n";
 
-# determine states
-for my $current (1..$s) {
+	# generate functions
+	$output .= "Regulatory functions\n";
+	@functions;
 	for my $i (0..$n-1) {
-		my $function = $functions[$i];
-		my @nodes = ($function =~ /(\d+)/g);
-		foreach $node (@nodes) {
-			my $bool = $states[$current-1][$node];
-			$function =~ s/ $node / $bool /;
+		my $string = "";
+		my @selected;
+		for my $z (0..$n-1) {
+			$selected[$z] = 0;
 		}
-		$cmd = "perl -e 'if ($function) { print 1 } else { print 0 }'";
-		my $bool = `$cmd`;
-		$states[$current][$i] = $bool;
-	}
-}
-
-# create table of states
-$output .= "\nState";
-for my $i (0..$n-1) {
-	$output .= "\tg$i";
-}
-$output .= "\n";
-for my $state (0..$s) {
-	$output .= "$state";
-	for my $i (0..$n-1) {
-		$output .= "\t$states[$state][$i]";
-	}
-	$output .= "\n";
-}
-
-# identify additional information including basin states, attractors and transient time
-@strings;
-$output .= "\n";
-for my $i (0..$s) {
-	$strings[$i] = "";
-	for my $j (0..$n-1) {
-		$strings[$i] .= "$states[$i][$j]";
-	}
-}
-$found = 0;
-for my $i (0..$s) {
-	if ($found) {
-		last;
-	}
-	for my $j ($i+1..$s) {
-		if ($strings[$i] eq $strings[$j]) {
-			if ($i != 0) {
-				if ($i-1 == 0) {
-					$output .= "Basin state at 0\n";
-				} else {
-					$output .= "Basin states from 0 to ";
-					$output .= $i-1;
-					$output .= "\n";
+		for my $j (0..$k-1) {
+			my $not = int(rand()+0.5);
+			if ($not) {
+				$string .= " !"
+			}
+			my $loop = 1;
+			while ($loop) {
+				my $node = int(rand($n));
+				if (!$selected[$node]) {
+					$string .= " $node ";
+					$selected[$node] = 1;
+					$loop = 0;
 				}
 			}
-			if ($j - $i == 1) {
-				$output .= "Point attractor starting at state $i\n"
-			} else {
-				$output .= "Cycle attractor of ";
-				$output .= $j-$i;
-				$output .= " iterations starting at state $i \n";
+			if ($j != $k-1) {
+				my $operator = int(rand()+0.5);
+				if ($operator) {
+					$string .= "&&";
+				} else {
+					$string .= "||";
+				}
 			}
-			$output .= "Transient time of $i iterations\n";
-			$found = 1;
-			last;
+		}
+		$functions[$i] = $string;
+		$gstring = $string;
+		$gstring =~ s/ (\d+) / g$1 /g;
+		$gstring =~ s/! /~/g;
+		$gstring =~ s/&&/\^/g;
+		$gstring =~ s/\|\|/v/g;
+		$gstring =~ s/^\s+//;
+		$gstring =~ s/\s+$//;
+		$output .= "g'$i = $gstring\n";
+	}
+
+	# initialise initial state
+	if ($set ne "") {
+		$set =~ s/[\s,]//g;
+		@start = split //, $set;
+		@states;
+		for my $i (0..$n-1) {
+			$states[0][$i] = $start[$i];
+		}
+	} else {
+		@states;
+		for my $i (0..$n-1) {
+			$states[0][$i] = int(rand()+0.5);
 		}
 	}
-}
 
-# write to file or print to STDOUT
-if ($fname ne "") {
-	open(my $f, '>', $fname) or die "Could not open file '$fname'";
-	print $f $output;
-	close $f;
-} else {
-	print $output;
-}
+	# determine states
+	for my $current (1..$s) {
+		for my $i (0..$n-1) {
+			my $function = $functions[$i];
+			my @nodes = ($function =~ /(\d+)/g);
+			foreach $node (@nodes) {
+				my $bool = $states[$current-1][$node];
+				$function =~ s/ $node / $bool /;
+			}
+			$cmd = "perl -e 'if ($function) { print 1 } else { print 0 }'";
+			my $bool = `$cmd`;
+			$states[$current][$i] = $bool;
+		}
+	}
 
+	# create table of states
+	$output .= "\nState";
+	for my $i (0..$n-1) {
+		$output .= "\tg$i";
+	}
+	$output .= "\n";
+	for my $state (0..$s) {
+		$output .= "$state";
+		for my $i (0..$n-1) {
+			$output .= "\t$states[$state][$i]";
+		}
+		$output .= "\n";
+	}
+
+	# identify additional information including basin states, attractors and transient time
+	@strings;
+	$output .= "\n";
+	for my $i (0..$s) {
+		$strings[$i] = "";
+		for my $j (0..$n-1) {
+			$strings[$i] .= "$states[$i][$j]";
+		}
+	}
+	$found = 0;
+	for my $i (0..$s) {
+		if ($found) {
+			last;
+		}
+		for my $j ($i+1..$s) {
+			if ($strings[$i] eq $strings[$j]) {
+				if ($i != 0) {
+					if ($i-1 == 0) {
+						$output .= "Basin state at 0\n";
+					} else {
+						$output .= "Basin states from 0 to ";
+						$output .= $i-1;
+						$output .= "\n";
+					}
+				}
+				if ($j - $i == 1) {
+					$output .= "Point attractor starting at state $i\n"
+				} else {
+					$output .= "Cycle attractor of ";
+					$output .= $j-$i;
+					$output .= " iterations starting at state $i \n";
+				}
+				$output .= "Transient time of $i iterations\n\n";
+				if ($write =~ /^\s*y\s*$/i || $same =~ /^\s*y\s*$/i) {
+					for (0..$n) {
+						$output .= "*\t";
+					}
+					$output .= "\n\n";
+				}
+				$found = 1;
+				last;
+			}
+		}
+	}
+
+	# write to file or print to STDOUT
+	if ($fname ne "") {
+		open(my $f, '>>', $fname) or die "Could not open file '$fname'";
+		print $f $output;
+		close $f;
+	} else {
+		print $output;
+	}
+	
+	# prompt to run again	
+	$run = "";
+	while ($run !~ /^\s*(y|n)\s*$/i) {
+		print "Run again? [Y/N]\n";
+		$run = <>;
+	}	
+}
