@@ -1,4 +1,4 @@
-# Boolean-Networks
+# Random Boolean Networks using rbn.pl
 
 This Perl program generates a random boolean network synchronously from user inputted parameters such as number of genes (nodes n), number of regulatory genes (variables k), number of states (states s) and an initial state that is either generated randomly or given as user input. Each node in the network can be in one of two states: on or off represented by 1 or 0 respectively. Time is represented as proceeding in discrete iterations, incrementing through states s. At each step, the new state of a node is obtained from a randomly generated function that uses logical operators. The output is a (s, n) matrix representing the state trajectory. The program provides additional information about the network such as point or cycle attractors, and corresponding basin states and transient time. Output can be written to a file or printed to the command line depending on initial user specifications.
 
@@ -53,3 +53,5 @@ Transient time of 2 iterations
 
 Run again? [Y/N]
 n
+
+Since the network uses logical operators to define functions it is deterministic with a finite state space and will therefore fall into a cycle irrespective of the initial state.
