@@ -1,10 +1,12 @@
 #!/usr/bin/perl
 
-while ($n !~ /^\s*\d+\s*\n$/) {
+# read in genes (g), variables (k) and the number of states
+# check all are non-negative integers and that k <= n
+while ($n !~ /^\s*\d+\s*\n$/ || $n == 0) {
 	print "Number of genes (g)\n";
 	$n = <>;
 }
-while ($k !~ /^\s*\d+\s*\n$/) {
+while ($k !~ /^\s*\d+\s*\n$/ || $k > $n || $k == 0) {
 	print "Number of variables (k) to be the regulatory function for gene g\n";
 	$k = <>;
 }
@@ -13,8 +15,19 @@ while ($s !~ /^\s*\d+\s*\n$/) {
 	$s = <>;
 }
 chomp ($n,$k,$s);
+while ($write !~ /^\s*(y|n)\s*$/i) {
+	print "Write to file? [Y/N]\n";
+	$write = <>;
+}
+if ($write =~ /^\s*y\s*$/i) {
+	while ($fname !~ /^\s*[\w\.]+\s*$/i) {
+		print "File name:\n";
+		$fname = <>;
+	}
+}
+chomp ($fname);
 
-# must be all integers. n, k > 0 and k <= n
+my $output = "$n-$k Boolean network\n";
 
 # generate functions
 @functions;
@@ -53,7 +66,7 @@ for my $i (0..$n-1) {
 	$gstring =~ s/! /!/g;
 	$gstring =~ s/^\s+//;
 	$gstring =~ s/\s+$//;
-	print "g'$i = $gstring\n";
+	$output .= "g'$i = $gstring\n";
 }
 
 # initialise initial state
@@ -77,18 +90,25 @@ for my $current (1..$s) {
 	}
 }
 
-# print states
-print "State";
+# create table of states
+$output .= "State";
 for my $i (0..$n-1) {
-	print "\tn$i";
+	$output .= "\tg$i";
 }
-print "\n";
+$output .= "\n";
 for my $state (0..$s) {
-	print "$state";
+	$output .= "$state";
 	for my $i (0..$n-1) {
-		print "\t$states[$state][$i]";
+		$output .= "\t$states[$state][$i]";
 	}
-	print "\n";
+	$output .= "\n";
+}
+
+# write to file or print to STDOUT
+if ($fname ne "") {
+
+} else {
+	print $output;
 }
 
 
