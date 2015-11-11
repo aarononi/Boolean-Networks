@@ -15,6 +15,17 @@ while ($s !~ /^\s*\d+\s*\n$/) {
 	$s = <>;
 }
 chomp ($n,$k,$s);
+while ($initial !~ /^\s*(y|n)\s*$/i) {
+	print "Select initial state? [Y/N] (if N initial state will be random)\n";
+	$initial = <>;
+}
+if ($initial =~ /^\s*y\s*$/i) {
+	while ($set !~ /^(\s*[01][\s,]*){$n}$/) {
+		print "Enter initial state ($n binary digits)\n";
+		$set = <>;
+	}
+}
+chomp ($set);
 while ($write !~ /^\s*(y|n)\s*$/i) {
 	print "Write to file? [Y/N]\n";
 	$write = <>;
@@ -25,12 +36,17 @@ if ($write =~ /^\s*y\s*$/i) {
 		$fname = <>;
 	}
 }
+$fname =~ s/^\s+//;
+$fname =~ s/\s+$//;
 chomp ($fname);
 
-my $output = "$n-$k Boolean network\n\n";
+# print header
+my $output = "$n-$k Boolean network\n";
+my $space = 2**$n;
+$output .= "State space = $space\n\n";
 
 # generate functions
-$output .= "Regulatory Functions\n";
+$output .= "Regulatory functions\n";
 @functions;
 for my $i (0..$n-1) {
 	my $string = "";
@@ -73,9 +89,18 @@ for my $i (0..$n-1) {
 }
 
 # initialise initial state
-@states;
-for my $i (0..$n-1) {
-	$states[0][$i] = int(rand()+0.5);
+if ($set ne "") {
+	$set =~ s/[\s,]//g;
+	@start = split //, $set;
+	@states;
+	for my $i (0..$n-1) {
+		$states[0][$i] = $start[$i];
+	}
+} else {
+	@states;
+	for my $i (0..$n-1) {
+		$states[0][$i] = int(rand()+0.5);
+	}
 }
 
 # determine states
@@ -107,6 +132,45 @@ for my $state (0..$s) {
 	$output .= "\n";
 }
 
+# identify additional information including basin states, attractors and transient time
+@strings;
+$output .= "\n";
+for my $i (0..$s) {
+	$strings[$i] = "";
+	for my $j (0..$n-1) {
+		$strings[$i] .= "$states[$i][$j]";
+	}
+}
+$found = 0;
+for my $i (0..$s) {
+	if ($found) {
+		last;
+	}
+	for my $j ($i+1..$s) {
+		if ($strings[$i] eq $strings[$j]) {
+			if ($i != 0) {
+				if ($i-1 == 0) {
+					$output .= "Basin state at 0\n";
+				} else {
+					$output .= "Basin states from 0 to ";
+					$output .= $i-1;
+					$output .= "\n";
+				}
+			}
+			if ($j - $i == 1) {
+				$output .= "Point attractor starting at state $i\n"
+			} else {
+				$output .= "Cycle attractor of ";
+				$output .= $j-$i;
+				$output .= " iterations starting at state $i \n";
+			}
+			$output .= "Transient time of $i iterations\n";
+			$found = 1;
+			last;
+		}
+	}
+}
+
 # write to file or print to STDOUT
 if ($fname ne "") {
 	open(my $f, '>', $fname) or die "Could not open file '$fname'";
@@ -115,5 +179,4 @@ if ($fname ne "") {
 } else {
 	print $output;
 }
-
 
