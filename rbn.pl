@@ -11,7 +11,7 @@ while ($k !~ /^\s*\d+\s*\n$/ || $k > $n || $k == 0) {
 	$k = <>;
 }
 while ($s !~ /^\s*\d+\s*\n$/) {
-	print "Number of states\n";
+	print "Number of iterations\n";
 	$s = <>;
 }
 chomp ($n,$k,$s);
@@ -42,7 +42,7 @@ while ($run eq "Start" || $run =~ /^\s*y\s*$/i) {
 		}
 		if ($write =~ /^\s*y\s*$/i) {
 			while ($fname !~ /^\s*[\w\.]+\s*$/i) {
-				print "File name:\n";
+				print "File name\n";
 				$fname = <>;
 			}
 		}
@@ -55,7 +55,7 @@ while ($run eq "Start" || $run =~ /^\s*y\s*$/i) {
 		if ($same =~ /^\s*n\s*$/i) {
 			$fname = "";
 			while ($fname !~ /^\s*[\w\.]+\s*$/i) {
-				print "File name:\n";
+				print "File name\n";
 				$fname= <>;
 			}
 		}
@@ -94,23 +94,66 @@ while ($run eq "Start" || $run =~ /^\s*y\s*$/i) {
 				}
 			}
 			if ($j != $k-1) {
-				my $operator = int(rand()+0.5);
-				if ($operator) {
-					$string .= "&&";
-				} else {
-					$string .= "||";
+				my $operator = int(rand(6));
+				if ($operator == 0) {
+					$string .= "AND";
+				} elsif ($operator == 1) {
+					$string .= "OR";
+				} elsif ($operator == 2) {
+					$string .= "XOR";
+				} elsif ($operator == 3) {
+					$string .= "XNOR";
+				} elsif ($operator == 4) {
+					$string .= "NAND";
+				} elsif ($operator == 5) {
+					$string .= "NOR";
 				}
 			}
 		}
-		$functions[$i] = $string;
+
 		$gstring = $string;
 		$gstring =~ s/ (\d+) / g$1 /g;
 		$gstring =~ s/! /~/g;
-		$gstring =~ s/&&/\^/g;
-		$gstring =~ s/\|\|/v/g;
 		$gstring =~ s/^\s+//;
 		$gstring =~ s/\s+$//;
 		$output .= "g'$i = $gstring\n";
+		
+		# Converts functions to Perl command line readable 
+		while ($string =~ /XNOR/){
+			my @vars = ($string =~ /(!*\s*\d+|!*\s*\([^ANDXOR]+\))\s*XNOR\s*(!*\s*\d+|!*\s*\([^ANDXOR]+\))/);
+			my $bb = 0;
+			$string =~ s/(!*\s*\d+|!*\s*\([^ANDXOR]+\))\s*XNOR\s*(!*\s*\d+|!*\s*\([^ANDXOR]+\))/\(\($vars[$bb] \&\& $vars[$bb+1]\) \|\| \(!$vars[$bb] \&\& !$vars[$bb+1]\)\)/;
+			$bb+=2;
+		}
+
+		while ($string =~ /XOR/){
+			my @vars = ($string =~ /(!*\s*\d+|!*\s*\([^ANDXOR]+\))\s*XOR\s*(!*\s*\d+|!*\s*\([^ANDXOR]+\))/);
+			my $bb = 0;
+			$string =~ s/(!*\s*\d+|!*\s*\([^ANDXOR]+\))\s*XOR\s*(!*\s*\d+|!*\s*\([^ANDXOR]+\))/\(\($vars[$bb] \|\| $vars[$bb+1]\) \&\& \(!$vars[$bb] \|\| !$vars[$bb+1]\)\)/;
+			$bb+=2;
+		}
+
+		while ($string =~ /NOR/){
+			my @vars = ($string =~ /(!*\s*\d+|!*\s*\([^ANDXOR]+\))\s*NOR\s*(!*\s*\d+|!*\s*\([^ANDXOR]+\))/);
+			my $bb = 0;
+			$string =~ s/(!*\s*\d+|!*\s*\([^ANDXOR]+\))\s*NOR\s*(!*\s*\d+|!*\s*\([^ANDXOR]+\))/\(!\($vars[$bb] \|\| $vars[$bb+1]\)\)/;
+			$bb+=2;
+		}
+
+
+		while ($string =~ /NAND/){
+			my @vars = ($string =~ /(!*\s*\d+|!*\s*\([^ANDXOR]+\))\s*NAND\s*(!*\s*\d+|!*\s*\([^ANDXOR]+\))/);
+			my $bb = 0;
+			$string =~ s/(!*\s*\d+|!*\s*\([^ANDXOR]+\))\s*NAND\s*(!*\s*\d+|!*\s*\([^ANDXOR]+\))/\(!\($vars[$bb] \&\& $vars[$bb+1]\)\)/;
+			$bb+=2;
+		}
+
+		$string =~ s/AND/&&/g;
+		$string =~ s/OR/||/g;
+
+		$string =~ s/!\s*!//g;
+
+		$functions[$i] = $string;
 	}
 
 	# initialise initial state
@@ -202,6 +245,9 @@ while ($run eq "Start" || $run =~ /^\s*y\s*$/i) {
 		}
 	}
 
+	if(!$found){
+		$output .= "No attractors found within $s iteration(s)\n";
+	}
 	# write to file or print to STDOUT
 	if ($fname ne "") {
 		open(my $f, '>>', $fname) or die "Could not open file '$fname'";
